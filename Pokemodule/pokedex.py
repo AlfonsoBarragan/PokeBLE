@@ -6,61 +6,63 @@ from enum import Enum
 
 # ATTACKS
 
-payback = Attack('Payback', 'Si no ataca primero dobla la potencia', 
-                    True, False, 50, 100, False, True, [Kind.Siniestro], 10, 
-                    lambda cm, pf, pt: payback_effect_funct(cm, pf, pt))
+class Attackpedia(Enum):
 
-def payback_effect_funct(combat_manager, pokemon_from, pokemon_to):
-    first = combat_manager.turn_sequence()
-    if first != pokemon_from:
-        combat_manager.attacks_selected[pokemon_from].intensity = 100
+    payback = Attack('Payback', 'Si no ataca primero dobla la potencia', 
+                        True, False, 50, 100, False, True, [Kind.Siniestro], 10, 
+                        lambda cm, pf, pt: payback_effect_funct(cm, pf, pt))
 
-    dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
-    combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
+    def payback_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        first = combat_manager.turn_sequence()
+        if first != pokemon_from:
+            combat_manager.attacks_selected[pokemon_from].intensity = 100
 
-    combat_manager.attacks_selected[pokemon_from].intensity = 50
-    
-    print('{} damage done!'.format(dmg))
+        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
+        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
 
-
-hex_att = Attack('Hex', '', 
-                    True, False, 65, 100, False, False, [Kind.Fantasma], 10, 
-                    lambda cm, pf, pt: hex_effect_funct(cm, pf, pt))
-
-def hex_effect_funct(combat_manager, pokemon_from, pokemon_to):
-    if combat_manager.pokemons_on_combat[pokemon_to].status != []:
-        combat_manager.attacks_selected[pokemon_from].intensity = 130
-
-    dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
-    combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
-
-    print('{} damage done!'.format(dmg))
-
-    
-    combat_manager.attacks_selected[pokemon_from].intensity = 65
+        combat_manager.attacks_selected[pokemon_from].intensity = 50
+        
+        print('{} damage done!'.format(dmg))
 
 
-lick = Attack('Lenguetazo', '',
-                    True, False, 30, 100, False, True, [Kind.Fantasma], 30, 
-                    lambda cm, pf, pt: lick_effect_funct(cm, pf, pt))
+    hex_att = Attack('Hex', '', 
+                        True, False, 65, 100, False, False, [Kind.Fantasma], 10, 
+                        lambda cm, pf, pt: hex_effect_funct(cm, pf, pt))
 
-def lick_effect_funct(combat_manager, pokemon_from, pokemon_to):
-    status_prob = random.randint(1,3)
+    def hex_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        if combat_manager.pokemons_on_combat[pokemon_to].status != []:
+            combat_manager.attacks_selected[pokemon_from].intensity = 130
 
-    if status_prob == 3:
-        combat_manager.pokemons_on_combat[pokemon_to].status.append(Status.Paralizado)
+        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
+        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
 
-    dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
-    combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
-    print('{} damage done!'.format(dmg))
-    
+        print('{} damage done!'.format(dmg))
 
-confuse_air = Attack('Aire confuso', '', 
-                    True, False, 0, 100, False, False, [Kind.Fantasma], 10, 
-                    lambda cm, pf, pt: confuse_air_effect_funct(cm, pf, pt))
+        
+        combat_manager.attacks_selected[pokemon_from].intensity = 65
 
-def confuse_air_effect_funct(combat_manager, pokemon_from, pokemon_to):
-    combat_manager.pokemons_on_combat[pokemon_to].status.append(Status.Confuso)
+
+    lick = Attack('Lenguetazo', '',
+                        True, False, 30, 100, False, True, [Kind.Fantasma], 30, 
+                        lambda cm, pf, pt: lick_effect_funct(cm, pf, pt))
+
+    def lick_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        status_prob = random.randint(1,3)
+
+        if status_prob == 3:
+            combat_manager.pokemons_on_combat[pokemon_to].status.append(Status.Paralizado)
+
+        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
+        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
+        print('{} damage done!'.format(dmg))
+        
+
+    confuse_air = Attack('Aire confuso', '', 
+                        True, False, 0, 100, False, False, [Kind.Fantasma], 10, 
+                        lambda cm, pf, pt: confuse_air_effect_funct(cm, pf, pt))
+
+    def confuse_air_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        combat_manager.pokemons_on_combat[pokemon_to].status.append(Status.Confuso)
 
 # POKEMONS
 
@@ -75,7 +77,7 @@ class Pok(Enum):
                                 'acc': 1
                                 },
                 (Kind.Fantasma, Kind.Veneno),
-                [payback, hex_att, lick, confuse_air],
+                [Attackpedia.payback, Attackpedia.hex_att, Attackpedia.lick, Attackpedia.confuse_air],
                 []
                 )
 

@@ -26,7 +26,8 @@ import dbus
 from advertisement import Advertisement
 from service import Application, Service, Characteristic, Descriptor
 from Pokemodule import combat_manager
-from Pokemodule.pokedex import Pok
+from Pokemodule.pokedex import *
+import random
 
 from copy import deepcopy
 from dataclasses import asdict
@@ -45,6 +46,7 @@ enemy_trainer = {
 }
 
 ally_trainer = {}
+new_pokes = []
 
 def init_combats(n):
     combat_array = []
@@ -178,13 +180,14 @@ class ChooseActionCharacteristic(Characteristic):
     def ReadValue(self, options):
         value = []
 
-        try:
-            desc = 'You choose the attack/action: {}'.format(self.service.combat.attacks_selected[1].name)
+        desc = 'You choose the attack/action: {}'.format(self.service.combat.attacks_selected[1].name)
 
         for c in str_format:
             value.append(dbus.Byte(c.encode()))
 
         return value
+
+
 
 class ChooseActionDescriptor(Descriptor):
     CHOOSE_ACTION_DESCRIPTOR_UUID = "30000001-710e-4a5b-8d75-3e5b444bc3cf"
@@ -240,8 +243,7 @@ class ExecActionCharacteristic(Characteristic):
     def ReadValue(self, options):
         value = []
 
-        try:
-            desc = 'You choose the attack/action: {}'.format(self.service.combat.attacks_selected[1].name)
+        desc = 'You choose the attack/action: {}'.format(self.service.combat.attacks_selected[1].name)
 
         for c in str_format:
             value.append(dbus.Byte(c.encode()))
@@ -312,53 +314,251 @@ class EntablishTrainerDescriptor(Descriptor):
 
         return value
 
+class DexService(Service):
+    DEX_INFO_SVC_UUID = "00000006-710e-4a5b-8d75-3e5b444bc3cf"
 
-class UnitCharacteristic(Characteristic):
-    UNIT_CHARACTERISTIC_UUID = "00000003-710e-4a5b-8d75-3e5b444bc3cf"
+    def __init__(self, index):
 
+        Service.__init__(self, index, self.DEX_INFO_SVC_UUID, True)
+        self.add_characteristic(ConsultPokemonCharacteristic(self))
+        self.add_characteristic(ConsultAttackCharacteristic(self))
+
+class ConsultPokemonCharacteristic(Characteristic):
+    CONSULT_POK_CHARACTERISTIC_UUID = "60000001-710e-4a5b-8d75-3e5b444bc3cf"
+    
     def __init__(self, service):
-        Characteristic.__init__(
-                self, self.UNIT_CHARACTERISTIC_UUID,
-                ["read", "write"], service)
-        self.add_descriptor(UnitDescriptor(self))
+            Characteristic.__init__(
+                    self, self.CONSULT_POK_CHARACTERISTIC_UUID,
+                    ["read", "write"], service)
+            self.add_descriptor(ConsultPokemonDescriptor(self))
+            self.last_pok = ''
 
     def WriteValue(self, value, options):
-        val = str(value[0]).upper()
-        if val == "C":
-            self.service.set_farenheit(False)
-        elif val == "F":
-            self.service.set_farenheit(True)
+        try:
+            val = str(value).lower()
+
+            self.last_pok = eval('Pok.{}.value'.format(val))
+
+        except Exception as e:
+            print(e)
 
     def ReadValue(self, options):
         value = []
 
-        if self.service.is_farenheit(): val = "F"
-        else: val = "C"
-        value.append(dbus.Byte(val.encode()))
+    
+        str_format = 'last Pokemon searched: {}'.format(self.last_pok)
 
-        return value
-
-class UnitDescriptor(Descriptor):
-    UNIT_DESCRIPTOR_UUID = "2901"
-    UNIT_DESCRIPTOR_VALUE = "Temperature Units (F or C)"
-
-    def __init__(self, characteristic):
-        Descriptor.__init__(
-                self, self.UNIT_DESCRIPTOR_UUID,
-                ["read"],
-                characteristic)
-
-    def ReadValue(self, options):
-        value = []
-        desc = self.UNIT_DESCRIPTOR_VALUE
-
-        for c in desc:
+        for c in str_format:
             value.append(dbus.Byte(c.encode()))
 
         return value
 
+class ConsultPokemonDescriptor(Descriptor):
+    POK_INFO_DESCRIPTOR_UUID = "61000001-710e-4a5b-8d75-3e5b444bc3cf"
+    POK_INFO_DESCRIPTOR_VALUE = "Introduce the name of the pokemon to consult: "
+
+    def __init__(self, characteristic):
+        Descriptor.__init__(
+                self, self.POK_INFO_DESCRIPTOR_UUID,
+                ["read"],
+                characteristic)
+
+    def ReadValue(self, options):
+        try:
+            desc = POK_INFO_DESCRIPTOR_VALUE
+            for index, pok in enumerate(Pok):
+                desc += '\n [{}] {}'.format(index, pok.value.name)
+
+            value = []
+
+            for c in desc:
+                value.append(dbus.Byte(c.encode()))
+
+            return value
+
+        except Exception as e:
+            print(e)
+
+class ConsultAttackCharacteristic(Characteristic):
+    CONSULT_ATCK_CHARACTERISTIC_UUID = "60000002-710e-4a5b-8d75-3e5b444bc3cf"
+    
+    def __init__(self, service):
+            Characteristic.__init__(
+                    self, self.CONSULT_ATCK_CHARACTERISTIC_UUID,
+                    ["read", "write"], service)
+            self.add_descriptor(ConsultAttackDescriptor(self))
+            self.last_pok = ''
+
+    def WriteValue(self, value, options):
+        try:
+            val = str(value).lower()
+
+            self.last_pok = eval('Attackpedia.{}.value'.format(val))
+
+        except Exception as e:
+            print(e)
+
+    def ReadValue(self, options):
+        value = []
+
+        str_format = 'last Pokemon searched: {}'.format(self.last_pok)
+
+        for c in str_format:
+            value.append(dbus.Byte(c.encode()))
+
+        return value
+
+class ConsultAttackDescriptor(Descriptor):
+    ATCK_INFO_DESCRIPTOR_UUID = "62000001-710e-4a5b-8d75-3e5b444bc3cf"
+    ATCK_INFO_DESCRIPTOR_VALUE = "Introduce the name of the attack to consult: "
+
+    def __init__(self, characteristic):
+        Descriptor.__init__(
+                self, self.ATCK_INFO_DESCRIPTOR_UUID,
+                ["read"],
+                characteristic)
+
+    def ReadValue(self, options):
+        try:
+            desc = ATCK_INFO_DESCRIPTOR_VALUE
+            for index, atck in enumerate(Attackpedia):
+                desc += '\n [{}] {}'.format(index, atck.value.name)
+
+            value = []
+
+            for c in desc:
+                value.append(dbus.Byte(c.encode()))
+
+            return value
+
+        except Exception as e:
+            print(e)
+
+class CreateService(Service):
+    CREATE_SVC_UUID = "00000007-710e-4a5b-8d75-3e5b444bc3cf"
+
+    def __init__(self, index):
+
+        Service.__init__(self, index, self.CREATE_SVC_UUID, True)
+        self.add_characteristic(CreatePokemonCharacteristic(self))
+        self.add_characteristic(CreateAttackCharacteristic(self))
+
+class CreatePokemonCharacteristic(Characteristic):
+    CREATE_POK_CHARACTERISTIC_UUID = "70000001-710e-4a5b-8d75-3e5b444bc3cf"
+    
+    def __init__(self, service):
+            Characteristic.__init__(
+                    self, self.CREATE_POK_CHARACTERISTIC_UUID,
+                    ["read", "write"], service)
+            self.add_descriptor(CreatePokemonDescriptor(self))
+
+    def WriteValue(self, value, options):
+        try:
+            val = str(value).lower()
+
+            
+            
+        except Exception as e:
+            print(e)
+
+    def ReadValue(self, options):
+        value = []
+
+        str_format = 'last Pokemon searched: {}'.format(self.last_pok)
+
+        for c in str_format:
+            value.append(dbus.Byte(c.encode()))
+
+        return value
+
+class ConsultPokemonDescriptor(Descriptor):
+    POK_INFO_DESCRIPTOR_UUID = "61000001-710e-4a5b-8d75-3e5b444bc3cf"
+    POK_INFO_DESCRIPTOR_VALUE = "Introduce the name of the pokemon to consult: "
+
+    def __init__(self, characteristic):
+        Descriptor.__init__(
+                self, self.POK_INFO_DESCRIPTOR_UUID,
+                ["read"],
+                characteristic)
+
+    def ReadValue(self, options):
+        try:
+            desc = POK_INFO_DESCRIPTOR_VALUE
+            for index, pok in enumerate(Pok):
+                desc += '\n [{}] {}'.format(index, pok.value.name)
+
+            value = []
+
+            for c in desc:
+                value.append(dbus.Byte(c.encode()))
+
+            return value
+
+        except Exception as e:
+            print(e)
+
+class ConsultAttackCharacteristic(Characteristic):
+    CONSULT_ATCK_CHARACTERISTIC_UUID = "60000002-710e-4a5b-8d75-3e5b444bc3cf"
+    
+    def __init__(self, service):
+            Characteristic.__init__(
+                    self, self.CONSULT_ATCK_CHARACTERISTIC_UUID,
+                    ["read", "write"], service)
+            self.add_descriptor(ConsultAttackDescriptor(self))
+            self.last_pok = ''
+
+    def WriteValue(self, value, options):
+        try:
+            val = str(value).lower()
+
+            self.last_pok = eval('Attackpedia.{}.value'.format(val))
+
+        except Exception as e:
+            print(e)
+
+    def ReadValue(self, options):
+        value = []
+
+        str_format = 'last Pokemon searched: {}'.format(self.last_pok)
+
+        for c in str_format:
+            value.append(dbus.Byte(c.encode()))
+
+        return value
+
+class ConsultAttackDescriptor(Descriptor):
+    ATCK_INFO_DESCRIPTOR_UUID = "62000001-710e-4a5b-8d75-3e5b444bc3cf"
+    ATCK_INFO_DESCRIPTOR_VALUE = "Introduce the name of the attack to consult: "
+
+    def __init__(self, characteristic):
+        Descriptor.__init__(
+                self, self.ATCK_INFO_DESCRIPTOR_UUID,
+                ["read"],
+                characteristic)
+
+    def ReadValue(self, options):
+        try:
+            desc = ATCK_INFO_DESCRIPTOR_VALUE
+            for index, atck in enumerate(Attackpedia):
+                desc += '\n [{}] {}'.format(index, atck.value.name)
+
+            value = []
+
+            for c in desc:
+                value.append(dbus.Byte(c.encode()))
+
+            return value
+
+        except Exception as e:
+            print(e)
+
+
 app = Application()
-app.add_service(CombatInfoService(0, combat_array[0]))
+
+for i in range(20):
+    app.add_service(CombatInfoService(i, combat_array[i]))
+
+app.add_service(DexService(20))
 app.register()
 
 adv = CombatAdvertisement(0)

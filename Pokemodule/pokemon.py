@@ -6,7 +6,7 @@ class Pokemon:
     name: str
     level: int
     attributes: dict
-    types: tuple
+    types: list
 
     attacks: list
     status: list

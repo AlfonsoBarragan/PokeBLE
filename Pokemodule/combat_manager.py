@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from Pokemodule.poketools import *
+from Pokemodule.pokedex import *
 
 import random
 

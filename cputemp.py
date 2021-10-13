@@ -27,7 +27,6 @@ from advertisement import Advertisement
 from service import Application, Service, Characteristic, Descriptor
 from Pokemodule import combat_manager
 from Pokemodule.pokedex import *
-from Pokemodule.poketools import Kind
 import random
 
 from copy import deepcopy
@@ -39,7 +38,7 @@ NOTIFY_TIMEOUT = 5000
 
 enemy_trainer = {
     'name': 'Doctorando Alfonso',
-    'Pokemons': [Pok.bletly.value],
+    'Pokemons': [Pokepedia.bletly.value],
     'Frase_Inicio': 'Veamos que tal va ese cliente ble jeje',
     'Frase_Victoria': 'Buen intento, seguro que el proximo sera mejor',
     'Frase_Derrota': 'La virgen santa si que viene fuerte la juventud',
@@ -272,7 +271,7 @@ class EntablishTrainerCharacteristic(Characteristic):
             dict_final = json.loads(str_final)
             pokemons_aux = []
             for pokemon_name in dict_final['Pokemons']:
-                pokemons_aux.append(eval('deepcopy(Pok.{}.value)'.format(pokemon_name)))
+                pokemons_aux.append(eval('deepcopy(Pokepedia.{}.value)'.format(pokemon_name)))
             
             dict_final['Pokemons'] = pokemons_aux
             self.service.combat.trainer_2 = dict_final
@@ -338,7 +337,7 @@ class ConsultPokemonCharacteristic(Characteristic):
         try:
             val = str(value).lower()
 
-            self.last_pok = eval('Pok.{}.value'.format(val))
+            self.last_pok = eval('Pokepedia.{}.value'.format(val))
 
         except Exception as e:
             print(e)
@@ -367,7 +366,7 @@ class ConsultPokemonDescriptor(Descriptor):
     def ReadValue(self, options):
         try:
             desc = POK_INFO_DESCRIPTOR_VALUE
-            for index, pok in enumerate(Pok):
+            for index, pok in enumerate(Pokepedia):
                 desc += '\n [{}] {}'.format(index, pok.value.name)
 
             value = []
@@ -457,12 +456,12 @@ class CreatePokemonCharacteristic(Characteristic):
     def WriteValue(self, value, options):
         try:
             val = json.loads(str(value))
-            eval('pokedex.Pok.{} = Pokemon({}, {}, {}, {}, {}, {})'.format(val['name'],
-                                                                            val['level'],
+            eval('pokedex.Pokepedia.{} = Pokemon({}, {}, {}, {}, {}, {})'.format(val['name'],
+                                                                            int(val['level']),
                                                                             val['attributes'],
-                                                                            val['types'],
-                                                                            val['attacks'],
-                                                                            val['status']))
+                                                                            [eval('Kindpedia.{}'.format(i)) for i in val['types']],
+                                                                            [eval('Attackpedia.{}'.format(i)) for i in val['attacks']],
+                                                                            [eval('Statuspedia.{}'.format(i)) for i in val['status']]))
 
 
             
@@ -526,7 +525,7 @@ class CreateAttackCharacteristic(Characteristic):
                                                                                                         int(val['accurated'])),
                                                                                                         bool(val['priority']),
                                                                                                         bool(val['makes_contact']),
-                                                                                                        [eval('Kind.{}'.format(i)) for i in val['attack_type']],
+                                                                                                        [eval('Kindpedia.{}'.format(i)) for i in val['attack_type']],
                                                                                                         int(val['pp']),
                                                                                                         lambda cm, pf, pt: eval('{}'.format(val['effects'])))
 

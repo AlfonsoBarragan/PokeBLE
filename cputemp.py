@@ -27,6 +27,7 @@ from advertisement import Advertisement
 from service import Application, Service, Characteristic, Descriptor
 from Pokemodule import combat_manager
 from Pokemodule.pokedex import *
+from Pokemodule.poketools import Kind
 import random
 
 from copy import deepcopy
@@ -451,12 +452,19 @@ class CreatePokemonCharacteristic(Characteristic):
                     self, self.CREATE_POK_CHARACTERISTIC_UUID,
                     ["read", "write"], service)
             self.add_descriptor(CreatePokemonDescriptor(self))
+            self.last_pok_added = ''
 
     def WriteValue(self, value, options):
         try:
-            val = str(value).lower()
+            val = json.loads(str(value))
+            eval('pokedex.Pok.{} = Pokemon({}, {}, {}, {}, {}, {})'.format(val['name'],
+                                                                            val['level'],
+                                                                            val['attributes'],
+                                                                            val['types'],
+                                                                            val['attacks'],
+                                                                            val['status']))
 
-            
+
             
         except Exception as e:
             print(e)
@@ -464,28 +472,26 @@ class CreatePokemonCharacteristic(Characteristic):
     def ReadValue(self, options):
         value = []
 
-        str_format = 'last Pokemon searched: {}'.format(self.last_pok)
+        str_format = 'last Pokemon added: {}'.format(self.last_pok_added)
 
         for c in str_format:
             value.append(dbus.Byte(c.encode()))
 
         return value
 
-class ConsultPokemonDescriptor(Descriptor):
-    POK_INFO_DESCRIPTOR_UUID = "61000001-710e-4a5b-8d75-3e5b444bc3cf"
-    POK_INFO_DESCRIPTOR_VALUE = "Introduce the name of the pokemon to consult: "
+class CreatePokemonDescriptor(Descriptor):
+    CREATE_POK_DESCRIPTOR_UUID = "71000001-710e-4a5b-8d75-3e5b444bc3cf"
+    CREATE_POK_DESCRIPTOR_VALUE = "Give a JSON object to create a Pokemon"
 
     def __init__(self, characteristic):
         Descriptor.__init__(
-                self, self.POK_INFO_DESCRIPTOR_UUID,
+                self, self.CREATE_POK_DESCRIPTOR_UUID,
                 ["read"],
                 characteristic)
 
     def ReadValue(self, options):
         try:
             desc = POK_INFO_DESCRIPTOR_VALUE
-            for index, pok in enumerate(Pok):
-                desc += '\n [{}] {}'.format(index, pok.value.name)
 
             value = []
 
@@ -497,21 +503,34 @@ class ConsultPokemonDescriptor(Descriptor):
         except Exception as e:
             print(e)
 
-class ConsultAttackCharacteristic(Characteristic):
-    CONSULT_ATCK_CHARACTERISTIC_UUID = "60000002-710e-4a5b-8d75-3e5b444bc3cf"
+class CreateAttackCharacteristic(Characteristic):
+    CREATE_ATCK_CHARACTERISTIC_UUID = "70000002-710e-4a5b-8d75-3e5b444bc3cf"
     
     def __init__(self, service):
             Characteristic.__init__(
-                    self, self.CONSULT_ATCK_CHARACTERISTIC_UUID,
+                    self, self.CREATE_ATCK_CHARACTERISTIC_UUID,
                     ["read", "write"], service)
             self.add_descriptor(ConsultAttackDescriptor(self))
-            self.last_pok = ''
+            self.last_attack = ''
 
     def WriteValue(self, value, options):
         try:
-            val = str(value).lower()
+            val = json.loads(str(value))
 
             self.last_pok = eval('Attackpedia.{}.value'.format(val))
+            eval('pokedex.Attackpedia.{} = Attack({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})'.format(val['name'],
+                                                                                                        val['desc'],
+                                                                                                        bool(val['physical']),
+                                                                                                        bool(val['special']),
+                                                                                                        int(val['intensity']),
+                                                                                                        int(val['accurated'])),
+                                                                                                        bool(val['priority']),
+                                                                                                        bool(val['makes_contact']),
+                                                                                                        [eval('Kind.{}'.format(i)) for i in val['attack_type']],
+                                                                                                        int(val['pp']),
+                                                                                                        lambda cm, pf, pt: eval('{}'.format(val['effects'])))
+
+
 
         except Exception as e:
             print(e)
@@ -519,16 +538,16 @@ class ConsultAttackCharacteristic(Characteristic):
     def ReadValue(self, options):
         value = []
 
-        str_format = 'last Pokemon searched: {}'.format(self.last_pok)
+        str_format = 'last attack created: {}'.format(self.last_pok)
 
         for c in str_format:
             value.append(dbus.Byte(c.encode()))
 
         return value
 
-class ConsultAttackDescriptor(Descriptor):
-    ATCK_INFO_DESCRIPTOR_UUID = "62000001-710e-4a5b-8d75-3e5b444bc3cf"
-    ATCK_INFO_DESCRIPTOR_VALUE = "Introduce the name of the attack to consult: "
+class CreateAttackDescriptor(Descriptor):
+    CREATE_ATCK_DESCRIPTOR_UUID = "72000001-710e-4a5b-8d75-3e5b444bc3cf"
+    CREATE_ATCK_DESCRIPTOR_VALUE = "Introduce the name of the attack to create: "
 
     def __init__(self, characteristic):
         Descriptor.__init__(
@@ -538,9 +557,7 @@ class ConsultAttackDescriptor(Descriptor):
 
     def ReadValue(self, options):
         try:
-            desc = ATCK_INFO_DESCRIPTOR_VALUE
-            for index, atck in enumerate(Attackpedia):
-                desc += '\n [{}] {}'.format(index, atck.value.name)
+            desc = CREATE_ATCK_DESCRIPTOR_VALUE
 
             value = []
 
@@ -555,10 +572,12 @@ class ConsultAttackDescriptor(Descriptor):
 
 app = Application()
 
-for i in range(20):
+for i in range(2):
     app.add_service(CombatInfoService(i, combat_array[i]))
 
 app.add_service(DexService(20))
+app.add_service(CreateService(21))
+
 app.register()
 
 adv = CombatAdvertisement(0)

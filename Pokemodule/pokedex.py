@@ -1,121 +1,9 @@
 from Pokemodule.pokemon import Pokemon
 from Pokemodule.attacks import Attack
 
-from Pokemodule.poketools import *
 from enum import Enum
 
-# ATTACKS
-
-class Attackpedia(Enum):
-
-    payback = Attack('Payback', 'Si no ataca primero dobla la potencia', 
-                        True, False, 50, 100, False, True, [Kind.Siniestro], 10, 
-                        lambda cm, pf, pt: payback_effect_funct(cm, pf, pt))
-
-    def payback_effect_funct(combat_manager, pokemon_from, pokemon_to):
-        first = combat_manager.turn_sequence()
-        if first != pokemon_from:
-            combat_manager.attacks_selected[pokemon_from].intensity = 100
-
-        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
-        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
-
-        combat_manager.attacks_selected[pokemon_from].intensity = 50
-        
-        print('{} damage done!'.format(dmg))
-
-
-    hex_att = Attack('Hex', '', 
-                        True, False, 65, 100, False, False, [Kind.Fantasma], 10, 
-                        lambda cm, pf, pt: hex_effect_funct(cm, pf, pt))
-
-    def hex_effect_funct(combat_manager, pokemon_from, pokemon_to):
-        if combat_manager.pokemons_on_combat[pokemon_to].status != []:
-            combat_manager.attacks_selected[pokemon_from].intensity = 130
-
-        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
-        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
-
-        print('{} damage done!'.format(dmg))
-
-        
-        combat_manager.attacks_selected[pokemon_from].intensity = 65
-
-
-    lick = Attack('Lenguetazo', '',
-                        True, False, 30, 100, False, True, [Kind.Fantasma], 30, 
-                        lambda cm, pf, pt: lick_effect_funct(cm, pf, pt))
-
-    def lick_effect_funct(combat_manager, pokemon_from, pokemon_to):
-        status_prob = random.randint(1,3)
-
-        if status_prob == 3:
-            combat_manager.pokemons_on_combat[pokemon_to].status.append(Status.Paralizado)
-
-        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
-        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
-        print('{} damage done!'.format(dmg))
-        
-
-    confuse_air = Attack('Aire confuso', '', 
-                        True, False, 0, 100, False, False, [Kind.Fantasma], 10, 
-                        lambda cm, pf, pt: confuse_air_effect_funct(cm, pf, pt))
-
-    def confuse_air_effect_funct(combat_manager, pokemon_from, pokemon_to):
-        combat_manager.pokemons_on_combat[pokemon_to].status.append(Status.Confuso)
-
-# POKEMONS
-
-
-class Pokepedia(Enum):
-    bletly = Pokemon('Bletly', 20, {'health': 35,
-                                'attack': 15,
-                                'defense': 14,
-                                'spe_attack': 38, 
-                                'spe_defense': 17,
-                                'speed': 33,
-                                'acc': 1
-                                },
-                (Kind.Fantasma, Kind.Veneno),
-                [Attackpedia.payback, Attackpedia.hex_att, Attackpedia.lick, Attackpedia.confuse_air],
-                []
-                )
-
-    ardum = Pokemon('Ardum', 20, {'health': 46,
-                              'attack': 28,
-                              'defense': 37,
-                              'spe_attack': 25, 
-                              'spe_defense': 32,
-                              'speed': 17,
-                              'acc': 1
-                              },
-                (Kind.Acero, Kind.Psiquico),
-                [],
-                [])
-
-    solmergle = Pokemon('Solmergle', 20, {'health': 61,
-                              'attack': 30,
-                              'defense': 23,
-                              'spe_attack': 26, 
-                              'spe_defense': 31,
-                              'speed': 41,
-                              'acc': 1
-                              },
-                (Kind.Acero, Kind.Fuego),
-                [],
-                [])
-
-    mamioswine = Pokemon('Mamioswine', 34, {'health': 128,
-                              'attack': 103,
-                              'defense': 69,
-                              'spe_attack': 62, 
-                              'spe_defense': 55,
-                              'speed': 68,
-                              'acc': 1
-                              },
-                (Kind.Acero, Kind.Psiquico),
-                [],
-                [])
+# KINDS
 
 class Kindpedia(Enum):
     Acero = 0
@@ -138,109 +26,223 @@ class Kindpedia(Enum):
     Volador = 17
 
 dict_kind_table = {
-    Kind.Acero: {
-                    'effective_to': [Kind.Hada, Kind.Hielo, Kind.Roca],
-                    'non_effective': [Kind.Acero, Kind.Agua, Kind.Tierra, Kind.Fuego]
+    Kindpedia.Acero: {
+                    'effective_to': [Kindpedia.Hada, Kindpedia.Hielo, Kindpedia.Roca],
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Agua, Kindpedia.Tierra, Kindpedia.Fuego]
                 },
 
-    Kind.Agua: {
-                    'effective_to': [Kind.Fuego, Kind.Tierra, Kind.Roca],
-                    'non_effective': [Kind.Agua, Kind.Dragon, Kind.Planta]
+    Kindpedia.Agua: {
+                    'effective_to': [Kindpedia.Fuego, Kindpedia.Tierra, Kindpedia.Roca],
+                    'non_effective': [Kindpedia.Agua, Kindpedia.Dragon, Kindpedia.Planta]
                 },
 
-    Kind.Bicho: {
-                    'effective_to': [Kind.Planta, Kind.Psiquico, Kind.Siniestro],
-                    'non_effective': [Kind.Acero, Kind.Fantasma, Kind.Fuego, Kind.Hada, 
-                                      Kind.Lucha, Kind.Veneno, Kind.Volador]
+    Kindpedia.Bicho: {
+                    'effective_to': [Kindpedia.Planta, Kindpedia.Psiquico, Kindpedia.Siniestro],
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Fantasma, Kindpedia.Fuego, Kindpedia.Hada, 
+                                      Kindpedia.Lucha, Kindpedia.Veneno, Kindpedia.Volador]
                 },
 
-    Kind.Dragon: {
-                    'effective_to': [Kind.Dragon],
-                    'non_effective': [Kind.Acero],
-                    'inmune_to':[Kind.Hada]
+    Kindpedia.Dragon: {
+                    'effective_to': [Kindpedia.Dragon],
+                    'non_effective': [Kindpedia.Acero],
+                    'inmune_to':[Kindpedia.Hada]
                 },
 
-    Kind.Electrico: {
-                        'effective_to': [Kind.Agua, Kind.Volador, Kind.Roca],
-                        'non_effective': [Kind.Dragon, Kind.Electrico, Kind.Planta],
-                        'inmune_to': [Kind.Tierra]
+    Kindpedia.Electrico: {
+                        'effective_to': [Kindpedia.Agua, Kindpedia.Volador, Kindpedia.Roca],
+                        'non_effective': [Kindpedia.Dragon, Kindpedia.Electrico, Kindpedia.Planta],
+                        'inmune_to': [Kindpedia.Tierra]
                     },
 
-    Kind.Fantasma: {
-                        'effective_to': [Kind.Fantasma, Kind.Psiquico],
-                        'non_effective': [Kind.Siniestro],
-                        'inmune_to': [Kind.Normal]
+    Kindpedia.Fantasma: {
+                        'effective_to': [Kindpedia.Fantasma, Kindpedia.Psiquico],
+                        'non_effective': [Kindpedia.Siniestro],
+                        'inmune_to': [Kindpedia.Normal]
                     },
 
-    Kind.Fuego: {
-                    'effective_to': [Kind.Acero, Kind.Bicho, Kind.Hielo, Kind.Planta],
-                    'non_effective': [Kind.Agua, Kind.Dragon, Kind.Fuego, Kind.Roca]
+    Kindpedia.Fuego: {
+                    'effective_to': [Kindpedia.Acero, Kindpedia.Bicho, Kindpedia.Hielo, Kindpedia.Planta],
+                    'non_effective': [Kindpedia.Agua, Kindpedia.Dragon, Kindpedia.Fuego, Kindpedia.Roca]
                 },
 
-    Kind.Hada: {
-                    'effective_to': [Kind.Dragon, Kind.Lucha, Kind.Siniestro],
-                    'non_effective': [Kind.Acero, Kind.Fuego, Kind.Veneno]
+    Kindpedia.Hada: {
+                    'effective_to': [Kindpedia.Dragon, Kindpedia.Lucha, Kindpedia.Siniestro],
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Fuego, Kindpedia.Veneno]
                 },
 
-    Kind.Hielo: {
-                    'effective_to': [Kind.Dragon, Kind.Planta, Kind.Tierra, Kind.Volador],
-                    'non_effective': [Kind.Fuego, Kind.Agua, Kind.Acero, Kind.Hielo]
+    Kindpedia.Hielo: {
+                    'effective_to': [Kindpedia.Dragon, Kindpedia.Planta, Kindpedia.Tierra, Kindpedia.Volador],
+                    'non_effective': [Kindpedia.Fuego, Kindpedia.Agua, Kindpedia.Acero, Kindpedia.Hielo]
                 },
 
-    Kind.Lucha: {
-                    'effective_to': [Kind.Acero, Kind.Hielo, Kind.Normal, Kind.Roca, Kind.Siniestro],
-                    'non_effective': [Kind.Bicho, Kind.Hada, Kind.Psiquico, Kind.Veneno, Kind.Volador],
-                    'inmune_to': [Kind.Fantasma]
+    Kindpedia.Lucha: {
+                    'effective_to': [Kindpedia.Acero, Kindpedia.Hielo, Kindpedia.Normal, Kindpedia.Roca, Kindpedia.Siniestro],
+                    'non_effective': [Kindpedia.Bicho, Kindpedia.Hada, Kindpedia.Psiquico, Kindpedia.Veneno, Kindpedia.Volador],
+                    'inmune_to': [Kindpedia.Fantasma]
                 },
 
-    Kind.Normal: {
+    Kindpedia.Normal: {
                     'effective_to': [],
-                    'non_effective': [Kind.Acero, Kind.Roca],
-                    'inmune_to': [Kind.Fantasma]
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Roca],
+                    'inmune_to': [Kindpedia.Fantasma]
                 },
 
-    Kind.Planta: {
-                    'effective_to': [Kind.Agua, Kind.Tierra, Kind.Roca],
-                    'non_effective': [Kind.Fuego, Kind.Acero, Kind.Dragon, 
-                                      Kind.Bicho, Kind.Planta, Kind.Veneno,
-                                      Kind.Volador]
+    Kindpedia.Planta: {
+                    'effective_to': [Kindpedia.Agua, Kindpedia.Tierra, Kindpedia.Roca],
+                    'non_effective': [Kindpedia.Fuego, Kindpedia.Acero, Kindpedia.Dragon, 
+                                      Kindpedia.Bicho, Kindpedia.Planta, Kindpedia.Veneno,
+                                      Kindpedia.Volador]
                 },
 
-    Kind.Psiquico: {
-                    'effective_to': [Kind.Lucha, Kind.Veneno],
-                    'non_effective': [Kind.Acero, Kind.Psiquico],
-                    'inmune_to': [Kind.Siniestro]
+    Kindpedia.Psiquico: {
+                    'effective_to': [Kindpedia.Lucha, Kindpedia.Veneno],
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Psiquico],
+                    'inmune_to': [Kindpedia.Siniestro]
                 },
 
-    Kind.Roca: {
-                    'effective_to': [Kind.Fuego, Kind.Bicho, Kind.Hielo, Kind.Volador],
-                    'non_effective': [Kind.Acero, Kind.Lucha, Kind.Tierra]
+    Kindpedia.Roca: {
+                    'effective_to': [Kindpedia.Fuego, Kindpedia.Bicho, Kindpedia.Hielo, Kindpedia.Volador],
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Lucha, Kindpedia.Tierra]
                 },
 
-    Kind.Siniestro: {
-                    'effective_to': [Kind.Fantasma, Kind.Psiquico],
-                    'non_effective': [Kind.Hada, Kind.Lucha, Kind.Siniestro]
+    Kindpedia.Siniestro: {
+                    'effective_to': [Kindpedia.Fantasma, Kindpedia.Psiquico],
+                    'non_effective': [Kindpedia.Hada, Kindpedia.Lucha, Kindpedia.Siniestro]
                 },
 
-    Kind.Tierra: {
-                    'effective_to': [Kind.Fuego, Kind.Acero, Kind.Electrico, Kind.Roca, Kind.Veneno],
-                    'non_effective': [Kind.Bicho, Kind.Planta],
-                    'inmune_to': [Kind.Volador]
+    Kindpedia.Tierra: {
+                    'effective_to': [Kindpedia.Fuego, Kindpedia.Acero, Kindpedia.Electrico, Kindpedia.Roca, Kindpedia.Veneno],
+                    'non_effective': [Kindpedia.Bicho, Kindpedia.Planta],
+                    'inmune_to': [Kindpedia.Volador]
                 },
 
-    Kind.Veneno: {
-                    'effective_to': [Kind.Hada, Kind.Planta],
-                    'non_effective': [Kind.Fantasma, Kind.Roca, Kind.Tierra,
-                                      Kind.Veneno],
-                    'inmune_to': [Kind.Acero]
+    Kindpedia.Veneno: {
+                    'effective_to': [Kindpedia.Hada, Kindpedia.Planta],
+                    'non_effective': [Kindpedia.Fantasma, Kindpedia.Roca, Kindpedia.Tierra,
+                                      Kindpedia.Veneno],
+                    'inmune_to': [Kindpedia.Acero]
                 },
 
-    Kind.Volador: {
-                    'effective_to': [Kind.Bicho, Kind.Lucha, Kind.Planta],
-                    'non_effective': [Kind.Acero, Kind.Electrico, Kind.Roca]
+    Kindpedia.Volador: {
+                    'effective_to': [Kindpedia.Bicho, Kindpedia.Lucha, Kindpedia.Planta],
+                    'non_effective': [Kindpedia.Acero, Kindpedia.Electrico, Kindpedia.Roca]
                 }
 
 }
+
+
+# ATTACKS
+
+class Attackpedia(Enum):
+
+    payback = Attack('Payback', 'Si no ataca primero dobla la potencia', 
+                        True, False, 50, 100, False, True, [Kindpedia.Siniestro], 10, 
+                        lambda cm, pf, pt: payback_effect_funct(cm, pf, pt))
+
+    def payback_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        first = combat_manager.turn_sequence()
+        if first != pokemon_from:
+            combat_manager.attacks_selected[pokemon_from].intensity = 100
+
+        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
+        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
+
+        combat_manager.attacks_selected[pokemon_from].intensity = 50
+        
+        print('{} damage done!'.format(dmg))
+
+
+    hex_att = Attack('Hex', '', 
+                        True, False, 65, 100, False, False, [Kindpedia.Fantasma], 10, 
+                        lambda cm, pf, pt: hex_effect_funct(cm, pf, pt))
+
+    def hex_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        if combat_manager.pokemons_on_combat[pokemon_to].status != []:
+            combat_manager.attacks_selected[pokemon_from].intensity = 130
+
+        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
+        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
+
+        print('{} damage done!'.format(dmg))
+
+        
+        combat_manager.attacks_selected[pokemon_from].intensity = 65
+
+
+    lick = Attack('Lenguetazo', '',
+                        True, False, 30, 100, False, True, [Kindpedia.Fantasma], 30, 
+                        lambda cm, pf, pt: lick_effect_funct(cm, pf, pt))
+
+    def lick_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        status_prob = random.randint(1,3)
+
+        if status_prob == 3:
+            combat_manager.pokemons_on_combat[pokemon_to].status.append(Statuspedia.Paralizado)
+
+        dmg = combat_manager.compute_damage(pokemon_from, pokemon_to)
+        combat_manager.pokemons_on_combat[pokemon_to].substract_hp(dmg)
+        print('{} damage done!'.format(dmg))
+        
+
+    confuse_air = Attack('Aire confuso', '', 
+                        True, False, 0, 100, False, False, [Kindpedia.Fantasma], 10, 
+                        lambda cm, pf, pt: confuse_air_effect_funct(cm, pf, pt))
+
+    def confuse_air_effect_funct(combat_manager, pokemon_from, pokemon_to):
+        combat_manager.pokemons_on_combat[pokemon_to].status.append(Statuspedia.Confuso)
+
+# POKEMONS
+
+
+class Pokepedia(Enum):
+    bletly = Pokemon('Bletly', 20, {'health': 35,
+                                'attack': 15,
+                                'defense': 14,
+                                'spe_attack': 38, 
+                                'spe_defense': 17,
+                                'speed': 33,
+                                'acc': 1
+                                },
+                (Kindpedia.Fantasma, Kindpedia.Veneno),
+                [Attackpedia.payback, Attackpedia.hex_att, Attackpedia.lick, Attackpedia.confuse_air],
+                []
+                )
+
+    ardum = Pokemon('Ardum', 20, {'health': 46,
+                              'attack': 28,
+                              'defense': 37,
+                              'spe_attack': 25, 
+                              'spe_defense': 32,
+                              'speed': 17,
+                              'acc': 1
+                              },
+                (Kindpedia.Acero, Kindpedia.Psiquico),
+                [],
+                [])
+
+    solmergle = Pokemon('Solmergle', 20, {'health': 61,
+                              'attack': 30,
+                              'defense': 23,
+                              'spe_attack': 26, 
+                              'spe_defense': 31,
+                              'speed': 41,
+                              'acc': 1
+                              },
+                (Kindpedia.Acero, Kindpedia.Fuego),
+                [],
+                [])
+
+    mamioswine = Pokemon('Mamioswine', 34, {'health': 128,
+                              'attack': 103,
+                              'defense': 69,
+                              'spe_attack': 62, 
+                              'spe_defense': 55,
+                              'speed': 68,
+                              'acc': 1
+                              },
+                (Kindpedia.Acero, Kindpedia.Psiquico),
+                [],
+                [])
 
 class Strong(Enum):
     Neutral = 1
